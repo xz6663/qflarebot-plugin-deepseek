@@ -24,7 +24,7 @@ export const defaults: Config = {
   dailyRequests: 100,
 }
 
-const HELP = '直接 @我 加上问题即可聊天，也可以用 /ai 问题。\n/清空：清除你在这个群里的聊天上下文。\n不同群、不同成员的上下文分别保存。'
+const HELP = '群里 @我 加上问题即可聊天；私聊直接发消息就行。\n/清空：清除你在这个会话里的聊天上下文。\n不同会话、不同成员的上下文分别保存。'
 const INPUT_LIMIT = 3000
 const ANSWER_LIMIT = 3000
 const REQUEST_TIMEOUT = 20_000
@@ -34,7 +34,8 @@ function conversationId(session: Session): string {
 }
 
 function inScope(session: Session): boolean {
-  return session.scene === 'group' && session.atMe
+  // 群聊要求 @机器人；私聊直接聊天即可
+  return session.scene === 'c2c' || (session.scene === 'group' && session.atMe)
 }
 
 function readHistory(row: Conversation | null, config: Config, now: number): Message[] {
@@ -159,15 +160,15 @@ async function reset(session: Session, ctx: Context): Promise<void> {
   if (!locked) { await session.reply('我还在回答你上一个问题，请回答结束后再清空。'); return }
   try {
     await ctx.db.run('UPDATE {conversations} SET history = ?, updated_at = ? WHERE id = ? AND lease = ?', '[]', Date.now(), key, lease)
-    await session.reply('已清空你在这个群里的聊天上下文。')
+    await session.reply('已清空你在这个会话里的聊天上下文。')
   } finally { await release(ctx, key, lease) }
 }
 
 export default definePlugin<Config>({
   name: 'deepseek',
   apiVersion: 1,
-  displayName: 'DeepSeek 群聊',
-  description: '在QQ群 @机器人连续聊天，按群和用户保存上下文',
+  displayName: 'DeepSeek 聊天',
+  description: 'QQ 群 @机器人 或私聊连续聊天，按会话和用户保存上下文',
   permissions: ['net', 'db'],
   defaultConfig: defaults,
   configSchema: {
@@ -195,13 +196,13 @@ export default definePlugin<Config>({
     },
   },
   commands: {
-    ai: { description: '和AI聊天', usage: '/ai 问题', scenes: ['group'], handler: ({ session, ctx, argText }) => chat(session, ctx, argText) },
-    clear: { aliases: ['清空'], description: '清空我的聊天记忆', scenes: ['group'], handler: ({ session, ctx }) => reset(session, ctx) },
-    aihelp: { aliases: ['聊天帮助'], description: '聊天使用说明', scenes: ['group'], handler: ({ session }) => inScope(session) ? HELP : undefined },
+    ai: { description: '和AI聊天', usage: '/ai 问题', scenes: ['group', 'c2c'], handler: ({ session, ctx, argText }) => chat(session, ctx, argText) },
+    clear: { aliases: ['清空'], description: '清空我的聊天记忆', scenes: ['group', 'c2c'], handler: ({ session, ctx }) => reset(session, ctx) },
+    aihelp: { aliases: ['聊天帮助'], description: '聊天使用说明', scenes: ['group', 'c2c'], handler: ({ session }) => inScope(session) ? HELP : undefined },
   },
   regex: {
     '[\\s\\S]+': {
-      priority: -100, scenes: ['group'],
+      priority: -100, scenes: ['group', 'c2c'],
       handler: ({ session, ctx }) => {
         if (!session.content.trimStart().startsWith('/')) return chat(session, ctx, session.content)
       },
