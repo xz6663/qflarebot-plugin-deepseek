@@ -1,6 +1,6 @@
 {
   "name": "deepseek",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "apiVersion": 1,
   "permissions": [
     "net",
@@ -14,7 +14,8 @@
       "description": "和AI聊天",
       "usage": "/ai 问题",
       "scenes": [
-        "group"
+        "group",
+        "c2c"
       ]
     },
     {
@@ -24,7 +25,8 @@
       ],
       "description": "清空我的聊天记忆",
       "scenes": [
-        "group"
+        "group",
+        "c2c"
       ]
     },
     {
@@ -34,7 +36,8 @@
       ],
       "description": "聊天使用说明",
       "scenes": [
-        "group"
+        "group",
+        "c2c"
       ]
     }
   ],
@@ -43,7 +46,8 @@
       "pattern": "[\\s\\S]+",
       "priority": -100,
       "scenes": [
-        "group"
+        "group",
+        "c2c"
       ]
     }
   ],
@@ -59,8 +63,8 @@
   "hasMiddleware": false,
   "services": [],
   "durableObjects": [],
-  "displayName": "DeepSeek 群聊",
-  "description": "在QQ群 @机器人连续聊天，按群和用户保存上下文",
+  "displayName": "DeepSeek 聊天",
+  "description": "QQ 群 @机器人 或私聊连续聊天，按会话和用户保存上下文",
   "configSchema": {
     "type": "object",
     "properties": {
